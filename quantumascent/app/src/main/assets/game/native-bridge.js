@@ -1,18 +1,7 @@
 /* =====================================================================
  * GENERIC NATIVE BRIDGE  (game-agnostic)
- * ---------------------------------------------------------------------
- * Dropped into any WebView game to connect it to native AdMob + Play
- * Billing. Safe no-op in a plain browser (no AndroidBridge present).
- *
- * Exposes:
- *   Native.showInterstitial()
- *   Native.showRewarded(cb)      cb(granted:boolean)
- *   Native.purchaseRemoveAds()
- *   Native.isAdsRemoved()        boolean
- *
- * The native Kotlin layer calls back into:  window.NativeGame.*
- * A per-game adapter (loaded AFTER this file) wires the game's own
- * game-over / revive functions to these helpers.
+ * Connects any WebView game to native AdMob + Play Billing.
+ * Safe no-op in a plain browser (no AndroidBridge present).
  * ===================================================================== */
 (function () {
   'use strict';
@@ -43,7 +32,6 @@
     }
   };
 
-  // Called by native code.
   window.NativeGame = {
     onReward: function (granted) { var c = pendingReward; pendingReward = null; if (c) c(!!granted); },
     onAdsRemovedChanged: function (v) {
@@ -61,16 +49,17 @@
     else safe(function () { B.showBanner && B.showBanner(); });
   }
 
-  // Floating "Remove Ads" button (only when native billing is available).
+  // Small "Remove Ads" button pinned to the RIGHT EDGE, vertically centered,
+  // so it never overlaps the game's top HUD or bottom control buttons.
   var removeBtn;
   function injectRemoveBtn() {
     if (!has()) return;
     removeBtn = document.createElement('button');
-    removeBtn.textContent = 'REMOVE ADS';
+    removeBtn.textContent = '✕ ADS';
     removeBtn.setAttribute('style',
-      'position:fixed;left:8px;bottom:8px;z-index:9999;padding:6px 10px;' +
-      'font:700 11px sans-serif;color:#fff;background:rgba(0,0,0,.55);' +
-      'border:1px solid #fff;border-radius:6px;');
+      'position:fixed;right:3px;top:50%;transform:translateY(-50%);z-index:9999;' +
+      'padding:4px 6px;font:700 10px sans-serif;color:#fff;background:rgba(0,0,0,.45);' +
+      'border:1px solid rgba(255,255,255,.55);border-radius:6px;opacity:.8;');
     removeBtn.onclick = function () { window.Native.purchaseRemoveAds(); };
     document.body.appendChild(removeBtn);
     updateRemoveBtn();

@@ -169,7 +169,10 @@
     }
 
     if (this.bossActive) this._updateBoss();
-    else if (this.frameCount % Math.max(10, 40 - this.level * 5) === 0) this._spawnEnemy();
+    else if (this.frameCount % Math.max(5, 20 - this.level * 3) === 0) {
+      this._spawnEnemy();
+      if (this.rng() < 0.55) this._spawnEnemy(); // denser waves = more action
+    }
 
     // Enemies move + player collision
     for (let i = this.enemies.length - 1; i >= 0; i--) {
