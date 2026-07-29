@@ -1,4 +1,4 @@
-name: Build all games (AAB + APK)
+name: Build all games
 
 on:
   workflow_dispatch:
@@ -12,6 +12,8 @@ jobs:
       matrix:
         game: [spacebala, neonsnake, quantumascent]
     runs-on: ubuntu-latest
+    env:
+      HAS_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 != '' }}
     defaults:
       run:
         working-directory: ${{ matrix.game }}
@@ -33,12 +35,28 @@ jobs:
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
           sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools" || true
 
+      # ---- Always: a playable TEST build (no secrets needed) ----
+      - name: Build test APK (debug)
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.game }}-TEST-apk
+          path: ${{ matrix.game }}/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      # ---- Only after you add secrets: the SIGNED release for Google Play ----
       - name: Restore signing keystore
+        if: env.HAS_KEYSTORE == 'true'
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: echo "$KEYSTORE_BASE64" | base64 -d > upload-keystore.jks
 
       - name: Write keystore.properties
+        if: env.HAS_KEYSTORE == 'true'
         run: |
           cat > keystore.properties <<PROPS
           storeFile=../upload-keystore.jks
@@ -47,15 +65,15 @@ jobs:
           keyPassword=${{ secrets.KEYSTORE_PASSWORD }}
           PROPS
 
-      - name: Build signed release
-        run: |
-          chmod +x gradlew
-          ./gradlew bundleRelease assembleRelease --no-daemon --stacktrace
+      - name: Build signed release (AAB + APK)
+        if: env.HAS_KEYSTORE == 'true'
+        run: ./gradlew bundleRelease assembleRelease --no-daemon --stacktrace
 
-      - name: Upload build outputs
+      - name: Upload signed release
+        if: env.HAS_KEYSTORE == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.game }}-release
+          name: ${{ matrix.game }}-RELEASE-signed
           path: |
             ${{ matrix.game }}/app/build/outputs/bundle/release/*.aab
             ${{ matrix.game }}/app/build/outputs/apk/release/*.apk
