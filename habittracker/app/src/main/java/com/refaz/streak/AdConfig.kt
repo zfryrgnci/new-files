@@ -17,9 +17,12 @@ object AdConfig {
 
     private const val REAL_BANNER = "ca-app-pub-0000000000000000/0000000000"
     private const val REAL_INTERSTITIAL = "ca-app-pub-0000000000000000/0000000000"
+    private const val TEST_REWARDED = "ca-app-pub-3940256099942544/5224354917"
+    private const val REAL_REWARDED = "ca-app-pub-0000000000000000/0000000000"
 
     val bannerId get() = if (USE_TEST_ADS) TEST_BANNER else REAL_BANNER
     val interstitialId get() = if (USE_TEST_ADS) TEST_INTERSTITIAL else REAL_INTERSTITIAL
+    val rewardedId get() = if (USE_TEST_ADS) TEST_REWARDED else REAL_REWARDED
 
     const val SUB_PRODUCT = "streak_pro"
     const val PLAN_MONTHLY = "monthly"
