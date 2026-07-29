@@ -1,0 +1,4 @@
+-keepclassmembers class * { @android.webkit.JavascriptInterface <methods>; }
+-keep class com.google.android.gms.ads.** { *; }
+-keep class com.google.android.ump.** { *; }
+-dontwarn com.google.android.gms.**

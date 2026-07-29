@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Focus — Pomodoro Timer</title>
+<style>
+  :root{ --bg:#0d1117; --card:#161b22; --line:#232a35; --text:#eef2f7; --muted:#9aa4b2;
+         --focus:#ff5a5f; --break:#26d07c; --accent:var(--focus); --radius:16px; }
+  [data-theme="indigo"]{ --focus:#6c8cff; --break:#26d0c9; }
+  [data-theme="forest"]{ --focus:#2fb56b; --break:#8bd450; }
+  [data-theme="sunset"]{ --focus:#ff7a1a; --break:#ffb020; }
+  [data-theme="light"]{ --bg:#f4f6fb; --card:#fff; --line:#e2e7f0; --text:#12161f; --muted:#5a6473; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  html,body{height:100%;}
+  body{background:var(--bg);color:var(--text);overflow-x:hidden;}
+  #app{max-width:520px;margin:0 auto;min-height:100%;padding:env(safe-area-inset-top) 0 20px;display:flex;flex-direction:column;}
+  header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;}
+  .brand{font-size:20px;font-weight:800;}
+  .brand b{color:var(--accent);}
+  .top-btns{display:flex;gap:8px;}
+  .icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .pro-pill{font-size:11px;font-weight:800;color:#000;background:var(--accent);padding:4px 8px;border-radius:20px;display:none;align-items:center;}
+  .phase{ text-align:center;margin-top:6px;font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
+  .task{display:block;margin:10px auto 0;width:80%;max-width:340px;background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--text);text-align:center;font-size:15px;padding:8px;}
+  .task::placeholder{color:var(--muted);}
+  .ring-wrap{flex:1;display:flex;align-items:center;justify-content:center;}
+  .ring{position:relative;width:270px;height:270px;}
+  svg{transform:rotate(-90deg);}
+  .track{stroke:var(--line);}
+  .prog{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset .3s linear, stroke .3s;}
+  .time{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .time .t{font-size:56px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .time .s{font-size:13px;color:var(--muted);margin-top:4px;}
+  .dots{display:flex;gap:7px;justify-content:center;margin:2px 0 14px;}
+  .pd{width:11px;height:11px;border-radius:50%;background:var(--line);}
+  .pd.on{background:var(--accent);}
+  .controls{display:flex;gap:14px;justify-content:center;align-items:center;padding:0 18px 10px;}
+  .main-btn{flex:0 0 auto;width:180px;height:60px;border:none;border-radius:30px;background:var(--accent);color:#fff;font-size:18px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.25);}
+  .sec-btn{width:56px;height:56px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:20px;cursor:pointer;}
+  .today{display:flex;gap:10px;padding:6px 18px 4px;}
+  .tstat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center;}
+  .tstat .n{font-size:22px;font-weight:800;color:var(--accent);}
+  .tstat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+  /* sheets */
+  .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;z-index:60;}
+  .sheet-bg.open{display:flex;}
+  .sheet{width:100%;max-width:520px;background:var(--card);border-radius:22px 22px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto;animation:up .2s ease;}
+  @keyframes up{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  .sheet h2{font-size:18px;margin-bottom:14px;}
+  .setrow{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line);}
+  .setrow .lbl{font-size:15px;}
+  .stepper{display:flex;align-items:center;gap:12px;}
+  .stepper button{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:18px;cursor:pointer;}
+  .stepper .v{min-width:44px;text-align:center;font-weight:700;}
+  .lock{font-size:11px;color:var(--muted);}
+  .btn{width:100%;padding:15px;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;margin-top:10px;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line);}
+  .pro-card{background:linear-gradient(135deg,var(--focus),var(--break));color:#08120c;border-radius:18px;padding:18px;margin:6px 0 14px;}
+  .pro-card h3{font-size:20px;margin-bottom:6px;}
+  .pro-card ul{margin:8px 0 14px 18px;font-size:14px;line-height:1.7;}
+  .plan{display:flex;gap:10px;}
+  .plan button{flex:1;background:rgba(0,0,0,.15);border:2px solid rgba(0,0,0,.25);color:#08120c;border-radius:14px;padding:12px;font-weight:800;cursor:pointer;}
+  .plan button b{display:block;font-size:17px;}
+  .theme-row{display:flex;gap:10px;margin:8px 0 6px;flex-wrap:wrap;}
+  .swatch{width:42px;height:42px;border-radius:50%;border:2px solid transparent;cursor:pointer;}
+  .swatch.sel{border-color:var(--text);}
+  .toast{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:#000;color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;z-index:80;opacity:0;transition:opacity .3s;pointer-events:none;}
+  .toast.show{opacity:.95;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">⏳ <b>Focus</b></div>
+    <div class="top-btns">
+      <div class="pro-pill" id="proPill">PRO</div>
+      <button class="icon-btn" id="shareBtn">↗</button>
+      <button class="icon-btn" id="setBtn">⚙</button>
+    </div>
+  </header>
+
+  <div class="phase" id="phaseLbl">FOCUS</div>
+  <input class="task" id="taskInput" placeholder="What are you focusing on?" maxlength="60">
+
+  <div class="ring-wrap">
+    <div class="ring">
+      <svg width="270" height="270" viewBox="0 0 270 270">
+        <circle class="track" cx="135" cy="135" r="120" fill="none" stroke-width="16"></circle>
+        <circle class="prog" id="prog" cx="135" cy="135" r="120" fill="none" stroke-width="16"
+                stroke-dasharray="753.98" stroke-dashoffset="0"></circle>
+      </svg>
+      <div class="time"><div class="t" id="timeT">25:00</div><div class="s" id="timeS">Ready</div></div>
+    </div>
+  </div>
+
+  <div class="dots" id="dots"></div>
+
+  <div class="controls">
+    <button class="sec-btn" id="resetBtn">↺</button>
+    <button class="main-btn" id="startBtn">Start</button>
+    <button class="sec-btn" id="skipBtn">⏭</button>
+  </div>
+
+  <div class="today">
+    <div class="tstat"><div class="n" id="tMin">0</div><div class="l">Min today</div></div>
+    <div class="tstat"><div class="n" id="tSess">0</div><div class="l">Sessions</div></div>
+    <div class="tstat"><div class="n" id="tStreak">0</div><div class="l">Day streak</div></div>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="sheet-bg" id="setSheet">
+  <div class="sheet">
+    <h2>Settings</h2>
+    <div class="pro-card" id="proCard">
+      <h3>Focus Pro</h3>
+      <ul><li>Custom timer lengths</li><li>All themes</li><li>No ads</li><li>Full history & stats</li></ul>
+      <div class="plan">
+        <button id="planMonthly"><b id="pMon">Monthly</b><small>cancel anytime</small></button>
+        <button id="planYearly"><b id="pYear">Yearly</b><small>best value</small></button>
+      </div>
+    </div>
+    <div class="setrow"><div class="lbl">Focus length <span class="lock" id="lockF"></span></div>
+      <div class="stepper"><button data-k="focus" data-d="-1">−</button><div class="v" id="vFocus">25</div><button data-k="focus" data-d="1">+</button></div></div>
+    <div class="setrow"><div class="lbl">Short break <span class="lock" id="lockS"></span></div>
+      <div class="stepper"><button data-k="brk" data-d="-1">−</button><div class="v" id="vBrk">5</div><button data-k="brk" data-d="1">+</button></div></div>
+    <div class="setrow"><div class="lbl">Long break <span class="lock" id="lockL"></span></div>
+      <div class="stepper"><button data-k="long" data-d="-1">−</button><div class="v" id="vLong">15</div><button data-k="long" data-d="1">+</button></div></div>
+    <div class="setrow"><div class="lbl">Sound</div>
+      <div class="stepper"><button id="soundToggle" style="width:64px;">On</button></div></div>
+    <div style="font-size:13px;color:var(--muted);margin-top:12px;">Theme</div>
+    <div class="theme-row" id="themeRow"></div>
+    <button class="btn btn-ghost" id="restore">Restore purchase</button>
+    <button class="btn btn-ghost" id="closeSet">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  var C=753.98; // 2*pi*120
+  var DEF={focus:25,brk:5,long:15,cycles:4,sound:true};
+  var data=load();
+  function load(){ try{var d=JSON.parse(localStorage.getItem('focus_data')); if(d&&d.settings) return d;}catch(e){}
+    return {settings:Object.assign({},DEF), days:{}, theme:'default'}; }
+  function save(){ try{localStorage.setItem('focus_data',JSON.stringify(data));}catch(e){} }
+
+  var isPro=false;
+  window.__setPro=function(v){ isPro=!!v; renderProUi(); buildThemes(); refreshLocks(); };
+
+  // timer state
+  var phase='focus', running=false, remaining=data.settings.focus*60, total=data.settings.focus*60;
+  var completedInCycle=0, endAt=0, tick=null, actionCount=0;
+
+  function key(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  var todayKey=key(new Date());
+
+  function fmt(s){ var m=Math.floor(s/60), ss=s%60; return String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0'); }
+  function phaseColor(){ return phase==='focus' ? getVar('--focus') : getVar('--break'); }
+  function getVar(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+  function draw(){
+    document.getElementById('timeT').textContent=fmt(remaining);
+    document.getElementById('phaseLbl').textContent = phase==='focus'?'FOCUS':(phase==='long'?'LONG BREAK':'BREAK');
+    var frac = total? remaining/total : 0;
+    var prog=document.getElementById('prog');
+    prog.style.strokeDashoffset = (C*(1-frac)).toFixed(1);
+    var col = phase==='focus'?getVar('--focus'):getVar('--break');
+    document.documentElement.style.setProperty('--accent', col);
+    document.getElementById('timeS').textContent = running?'In progress':'Ready';
+    // dots
+    var dots=document.getElementById('dots'); dots.innerHTML='';
+    for(var i=0;i<data.settings.cycles;i++){ var d=document.createElement('div'); d.className='pd'+(i<completedInCycle?' on':''); dots.appendChild(d); }
+    document.getElementById('startBtn').textContent = running?'Pause':(remaining<total?'Resume':'Start');
+    renderToday();
+  }
+
+  function startPause(){ running?pause():start(); }
+  function start(){
+    running=true; endAt=Date.now()+remaining*1000;
+    clearInterval(tick);
+    tick=setInterval(function(){
+      remaining=Math.max(0,Math.round((endAt-Date.now())/1000));
+      if(remaining<=0){ clearInterval(tick); complete(); } else draw();
+    },250);
+    draw();
+  }
+  function pause(){ running=false; clearInterval(tick); draw(); }
+  function reset(){ running=false; clearInterval(tick); remaining=total; draw(); }
+
+  function complete(){
+    running=false;
+    if(data.settings.sound) chime();
+    if(navigator.vibrate) try{navigator.vibrate(200);}catch(e){}
+    if(phase==='focus'){
+      // log focus minutes
+      var day=data.days[todayKey]||{min:0,sess:0}; day.min+=Math.round(total/60); day.sess+=1; data.days[todayKey]=day; save();
+      completedInCycle++;
+      if(completedInCycle>=data.settings.cycles){ completedInCycle=0; setPhase('long'); }
+      else setPhase('brk');
+      if(++actionCount % 2 === 0 && window.Native) window.Native.showInterstitial();
+      toast('Nice! '+Math.round(total/60)+' min focused 🎯');
+    } else {
+      setPhase('focus');
+      toast('Break over — back to focus');
+    }
+    // auto-start next phase
+    start();
+  }
+  function skip(){ clearInterval(tick); running=false;
+    if(phase==='focus'){ if(++completedInCycle>=data.settings.cycles){completedInCycle=0;setPhase('long');} else setPhase('brk'); }
+    else setPhase('focus');
+    draw();
+  }
+  function setPhase(p){ phase=p; total=(p==='focus'?data.settings.focus:(p==='long'?data.settings.long:data.settings.brk))*60; remaining=total; }
+
+  function chime(){
+    try{ var ac=new (window.AudioContext||window.webkitAudioContext)();
+      [880,1175,1568].forEach(function(f,i){ var o=ac.createOscillator(),g=ac.createGain();
+        o.frequency.value=f; o.connect(g); g.connect(ac.destination);
+        var t=ac.currentTime+i*0.18; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.25,t+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+0.4); o.start(t); o.stop(t+0.42); }); }catch(e){}
+  }
+
+  // stats
+  function dayStreak(){ var s=0,d=new Date();
+    if(!(data.days[key(d)]&&data.days[key(d)].sess)) d.setDate(d.getDate()-1);
+    while(data.days[key(d)]&&data.days[key(d)].sess){ s++; d.setDate(d.getDate()-1);} return s; }
+  function renderToday(){ var t=data.days[todayKey]||{min:0,sess:0};
+    document.getElementById('tMin').textContent=t.min; document.getElementById('tSess').textContent=t.sess;
+    document.getElementById('tStreak').textContent=dayStreak(); }
+
+  // settings
+  function refreshLocks(){ var lk=isPro?'':'🔒 Pro';
+    document.getElementById('lockF').textContent=lk; document.getElementById('lockS').textContent=lk; document.getElementById('lockL').textContent=lk;
+    document.getElementById('vFocus').textContent=data.settings.focus;
+    document.getElementById('vBrk').textContent=data.settings.brk;
+    document.getElementById('vLong').textContent=data.settings.long;
+    document.getElementById('soundToggle').textContent=data.settings.sound?'On':'Off';
+  }
+  document.querySelectorAll('.stepper button[data-k]').forEach(function(b){
+    b.onclick=function(){
+      if(!isPro){ toast('Custom timers are a Pro feature'); return; }
+      var k=b.getAttribute('data-k'), d=parseInt(b.getAttribute('data-d'));
+      var map={focus:'focus',brk:'brk',long:'long'}; var key2=map[k];
+      var val=data.settings[key2]+d; val=Math.max(1,Math.min(90,val)); data.settings[key2]=val; save(); refreshLocks();
+      if(!running && ((phase==='focus'&&k==='focus')||(phase==='brk'&&k==='brk')||(phase==='long'&&k==='long'))){ setPhase(phase); draw(); }
+    };
+  });
+  document.getElementById('soundToggle').onclick=function(){ data.settings.sound=!data.settings.sound; save(); refreshLocks(); };
+
+  // pro/theme
+  function renderProUi(){ document.getElementById('proPill').style.display=isPro?'flex':'none'; document.getElementById('proCard').style.display=isPro?'none':'block'; }
+  document.getElementById('planMonthly').onclick=function(){ buy('monthly'); };
+  document.getElementById('planYearly').onclick=function(){ buy('yearly'); };
+  document.getElementById('restore').onclick=function(){ if(window.Native&&window.Native.restore) window.Native.restore(); toast('Restoring…'); };
+  function buy(p){ if(window.Native&&window.Native.subscribe) window.Native.subscribe(p); else toast('Subscriptions available on the published app.'); }
+  window.__setPrices=function(m,y){ if(m)document.getElementById('pMon').textContent=m; if(y)document.getElementById('pYear').textContent=y; };
+
+  function buildThemes(){ var themes=[['default','#ff5a5f'],['indigo','#6c8cff'],['forest','#2fb56b'],['sunset','#ff7a1a'],['light','#cccccc']];
+    var row=document.getElementById('themeRow'); row.innerHTML='';
+    themes.forEach(function(t){ var b=document.createElement('div'); b.className='swatch'+(data.theme===t[0]?' sel':''); b.style.background=t[1];
+      b.onclick=function(){ if(t[0]!=='default'&&!isPro){ toast('Themes are a Pro feature'); return; } data.theme=t[0]; applyTheme(); save(); buildThemes(); draw(); }; row.appendChild(b); }); }
+  function applyTheme(){ if(data.theme&&data.theme!=='default') document.documentElement.setAttribute('data-theme',data.theme); else document.documentElement.removeAttribute('data-theme'); }
+
+  // share
+  document.getElementById('shareBtn').onclick=function(){
+    var t=data.days[todayKey]||{min:0,sess:0};
+    var txt='I focused for '+t.min+' minutes today with Focus ⏳ ('+dayStreak()+'-day streak!) ';
+    var url='https://play.google.com/store/apps/details?id=com.refaz.focus';
+    if(navigator.share) navigator.share({title:'Focus',text:txt,url:url}).catch(function(){});
+    else if(window.Native&&window.Native.share) window.Native.share(txt+url);
+    else toast('Focus a session first!');
+  };
+
+  // sheets
+  document.getElementById('setBtn').onclick=function(){ document.getElementById('setSheet').classList.add('open'); };
+  document.getElementById('closeSet').onclick=function(){ document.getElementById('setSheet').classList.remove('open'); };
+  document.getElementById('setSheet').addEventListener('click',function(e){ if(e.target===this) this.classList.remove('open'); });
+
+  document.getElementById('startBtn').onclick=startPause;
+  document.getElementById('resetBtn').onclick=reset;
+  document.getElementById('skipBtn').onclick=skip;
+  document.getElementById('taskInput').addEventListener('input',function(){ /* label only */ });
+
+  var tT; function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tT); tT=setTimeout(function(){t.classList.remove('show');},1800); }
+
+  // pause when backgrounded (native calls these)
+  window.__onPause=function(){ if(running){ pause(); } };
+  window.__onResume=function(){};
+
+  // boot
+  applyTheme(); renderProUi(); buildThemes(); refreshLocks(); setPhase('focus'); draw();
+})();
+</script>
+  <script src="app-bridge.js"></script>
+</body>
+</html>

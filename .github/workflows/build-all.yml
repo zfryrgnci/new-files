@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        game: [spacebala, neonsnake, quantumascent, habittracker]
+        game: [spacebala, neonsnake, quantumascent, habittracker, focus]
     runs-on: ubuntu-latest
     env:
       HAS_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 != '' }}
