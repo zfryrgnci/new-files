@@ -1,0 +1,6 @@
+{
+  "name": "space-bala-tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": { "test": "node game_core_test.js" }
+}
