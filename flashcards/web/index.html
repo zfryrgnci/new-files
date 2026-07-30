@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Flashcards — Study & Test Prep</title>
+<style>
+  :root{ --bg:#0c1020; --card:#161c31; --card2:#1f2740; --line:#2a3350; --text:#eef2fb; --muted:#95a1c6; --accent:#7c5cff; --good:#26d07c; --bad:#ff5c6c; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  html,body{height:100%;} body{background:var(--bg);color:var(--text);}
+  #app{max-width:560px;margin:0 auto;min-height:100%;padding:env(safe-area-inset-top) 14px 24px;}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 4px 10px;}
+  .brand{font-size:21px;font-weight:800;} .brand b{color:var(--accent);}
+  .icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:18px;cursor:pointer;}
+  .sub{color:var(--muted);font-size:13px;padding:0 4px 10px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .deck{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;position:relative;overflow:hidden;}
+  .deck .e{font-size:30px;} .deck .n{font-weight:800;margin-top:8px;font-size:15px;}
+  .deck .c{font-size:12px;color:var(--muted);margin-top:2px;}
+  .pbar{height:6px;border-radius:4px;background:var(--card2);margin-top:10px;overflow:hidden;} .pbar>i{display:block;height:100%;background:var(--accent);width:0;}
+  /* study */
+  .view{display:none;} .view.on{display:block;}
+  .topbar{display:flex;align-items:center;gap:10px;padding:6px 2px 10px;}
+  .topbar .back{font-size:22px;cursor:pointer;} .topbar .title{font-weight:800;flex:1;}
+  .topbar .count{color:var(--muted);font-size:13px;}
+  .flip{perspective:1200px;height:340px;margin:10px 0;}
+  .inner{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;cursor:pointer;}
+  .inner.flipped{transform:rotateY(180deg);}
+  .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:20px;border:1px solid var(--line);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;}
+  .face .lbl{position:absolute;top:14px;left:16px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .face .txt{font-size:24px;font-weight:700;line-height:1.3;}
+  .back{transform:rotateY(180deg);background:var(--card2);}
+  .back .txt{color:var(--good);}
+  .hint{text-align:center;color:var(--muted);font-size:13px;margin-top:-2px;}
+  .study-btns{display:flex;gap:12px;margin-top:16px;}
+  .study-btns button{flex:1;padding:16px;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;}
+  .again{background:transparent;color:var(--bad);border:2px solid var(--bad);}
+  .got{background:var(--good);color:#04150c;}
+  .exam-btn{width:100%;margin-top:14px;padding:14px;border:none;border-radius:14px;background:var(--card2);color:var(--text);font-weight:800;font-size:15px;cursor:pointer;border:1px solid var(--line);}
+  .summary{text-align:center;padding:30px 10px;}
+  .summary .big{font-size:44px;font-weight:800;color:var(--accent);}
+  .btn{width:100%;padding:15px;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;margin-top:10px;background:var(--accent);color:#fff;}
+  .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);}
+  /* exam */
+  .q{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;font-size:19px;font-weight:700;margin:10px 0;min-height:90px;display:flex;align-items:center;}
+  .opt{background:var(--card2);border:2px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;font-size:15px;}
+  .opt.correct{border-color:var(--good);background:rgba(38,208,124,.15);}
+  .opt.wrong{border-color:var(--bad);background:rgba(255,92,108,.15);}
+  .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#000;color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;z-index:80;opacity:0;transition:opacity .3s;pointer-events:none;}
+  .toast.show{opacity:.95;}
+  .lockmsg{font-size:12px;color:var(--muted);text-align:center;margin-top:6px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- HOME -->
+  <div class="view on" id="home">
+    <header><div class="brand">🎓 <b>Flash</b>cards</div><button class="icon-btn" id="shareBtn">↗</button></header>
+    <div class="sub">Tap a deck to study. Flip cards, mark what you know, and prep for your test.</div>
+    <div class="grid" id="deckGrid"></div>
+  </div>
+
+  <!-- STUDY -->
+  <div class="view" id="study">
+    <div class="topbar"><span class="back" id="sBack">‹</span><span class="title" id="sTitle">Deck</span><span class="count" id="sCount"></span></div>
+    <div class="pbar"><i id="sBar"></i></div>
+    <div class="flip" id="flip"><div class="inner" id="inner">
+      <div class="face"><div class="lbl">Question</div><div class="txt" id="frontT"></div></div>
+      <div class="face back"><div class="lbl">Answer</div><div class="txt" id="backT"></div></div>
+    </div></div>
+    <div class="hint" id="flipHint">Tap the card to flip</div>
+    <div class="study-btns"><button class="again" id="againBtn">Again</button><button class="got" id="gotBtn">Got it ✓</button></div>
+    <button class="exam-btn" id="examBtn">📝 Exam Mode (multiple choice)</button>
+    <div class="lockmsg" id="examLock"></div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="view" id="done">
+    <div class="topbar"><span class="back" id="dBack">‹</span><span class="title">Session complete</span></div>
+    <div class="summary"><div class="big" id="doneBig">100%</div><div id="doneSub" style="color:var(--muted);margin-top:6px;"></div></div>
+    <button class="btn" id="restartBtn">Study again</button>
+    <button class="btn ghost" id="homeBtn">Back to decks</button>
+  </div>
+
+  <!-- EXAM -->
+  <div class="view" id="exam">
+    <div class="topbar"><span class="back" id="eBack">‹</span><span class="title" id="eTitle">Exam</span><span class="count" id="eCount"></span></div>
+    <div class="pbar"><i id="eBar"></i></div>
+    <div class="q" id="examQ"></div>
+    <div id="examOpts"></div>
+  </div>
+
+  <!-- EXAM RESULT -->
+  <div class="view" id="examDone">
+    <div class="topbar"><span class="back" id="edBack">‹</span><span class="title">Exam result</span></div>
+    <div class="summary"><div class="big" id="scoreBig">0/0</div><div id="scoreSub" style="color:var(--muted);margin-top:6px;"></div></div>
+    <button class="btn" id="examAgain">Retake exam</button>
+    <button class="btn ghost" id="examHome">Back to decks</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="cards.js"></script>
+<script>
+(function(){
+  'use strict';
+  var DECKS=window.DECKS||[];
+  var data=load(); function load(){ try{var d=JSON.parse(localStorage.getItem('fc_data')); if(d&&d.known) return d;}catch(e){} return {known:{},best:{}}; }
+  function save(){ try{localStorage.setItem('fc_data',JSON.stringify(data));}catch(e){} }
+  var isPro=false;
+  window.__onAdsRemoved=function(v){ isPro=!!v; updateExamLock(); };
+
+  function el(id){return document.getElementById(id);}
+  function show(v){ ['home','study','done','exam','examDone'].forEach(function(x){el(x).classList.remove('on');}); el(v).classList.add('on'); }
+  var tT; function toast(m){ var t=el('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tT); tT=setTimeout(function(){t.classList.remove('show');},1600); }
+  function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+
+  // HOME
+  function renderHome(){
+    var g=el('deckGrid'); g.innerHTML='';
+    DECKS.forEach(function(d){
+      var kn=(data.known[d.id]||[]).length, tot=d.cards.length, pct=Math.round(kn/tot*100);
+      var c=document.createElement('div'); c.className='deck'; c.style.borderColor=d.color+'55';
+      c.innerHTML='<div class="e">'+d.emoji+'</div><div class="n">'+d.name+'</div><div class="c">'+kn+' / '+tot+' learned</div>'+
+        '<div class="pbar"><i style="width:'+pct+'%;background:'+d.color+'"></i></div>';
+      c.onclick=function(){ startStudy(d); };
+      g.appendChild(c);
+    });
+  }
+
+  // STUDY
+  var curDeck=null, queue=[], idx=0, finishCount=0;
+  function startStudy(d){ curDeck=d; el('sTitle').textContent=d.emoji+' '+d.name;
+    document.documentElement.style.setProperty('--accent', d.color);
+    queue=shuffle(d.cards.map(function(_,i){return i;})); idx=0; showCard(); updateExamLock(); show('study'); }
+  function showCard(){
+    if(idx>=queue.length){ finishStudy(); return; }
+    el('inner').classList.remove('flipped');
+    var ci=queue[idx];
+    el('frontT').textContent=curDeck.cards[ci][0];
+    el('backT').textContent=curDeck.cards[ci][1];
+    el('sCount').textContent=(idx+1)+' / '+queue.length;
+    el('sBar').style.width=Math.round(idx/queue.length*100)+'%';
+  }
+  el('inner').onclick=function(){ this.classList.toggle('flipped'); };
+  el('gotBtn').onclick=function(){ var ci=queue[idx]; var k=data.known[curDeck.id]||[]; if(k.indexOf(ci)<0){k.push(ci); data.known[curDeck.id]=k; save();} idx++; showCard(); };
+  el('againBtn').onclick=function(){ queue.push(queue[idx]); idx++; showCard(); };
+  function finishStudy(){
+    var kn=(data.known[curDeck.id]||[]).length, tot=curDeck.cards.length;
+    el('doneBig').textContent=Math.round(kn/tot*100)+'%';
+    el('doneSub').textContent='You\'ve learned '+kn+' of '+tot+' cards in '+curDeck.name+'.';
+    renderHome(); show('done');
+    if(++finishCount % 2 === 0 && window.Native) window.Native.showInterstitial();
+  }
+  el('sBack').onclick=function(){ renderHome(); show('home'); };
+  el('dBack').onclick=el('homeBtn').onclick=function(){ renderHome(); show('home'); };
+  el('restartBtn').onclick=function(){ startStudy(curDeck); };
+
+  // EXAM (Pro)
+  function updateExamLock(){ el('examLock').textContent = isPro?'':'🔒 Exam Mode is a Pro feature — tap to unlock (also removes ads)'; }
+  el('examBtn').onclick=function(){
+    if(!isPro){ if(window.Native&&window.Native.purchaseRemoveAds){ window.Native.purchaseRemoveAds(); } else toast('Exam Mode unlocks in the published app.'); return; }
+    startExam(curDeck);
+  };
+  var exQ=[], exI=0, exScore=0;
+  function startExam(d){ curDeck=d; el('eTitle').textContent='Exam: '+d.name;
+    var pool=shuffle(d.cards.map(function(_,i){return i;})).slice(0,Math.min(10,d.cards.length));
+    exQ=pool; exI=0; exScore=0; showQ(); show('exam'); }
+  function showQ(){
+    if(exI>=exQ.length){ finishExam(); return; }
+    var ci=exQ[exI], correct=curDeck.cards[ci][1];
+    var others=shuffle(curDeck.cards.filter(function(c){return c[1]!==correct;}).map(function(c){return c[1];})).slice(0,3);
+    var opts=shuffle(others.concat([correct]));
+    el('examQ').textContent=curDeck.cards[ci][0];
+    el('eCount').textContent=(exI+1)+' / '+exQ.length;
+    el('eBar').style.width=Math.round(exI/exQ.length*100)+'%';
+    var box=el('examOpts'); box.innerHTML='';
+    opts.forEach(function(o){ var b=document.createElement('div'); b.className='opt'; b.textContent=o;
+      b.onclick=function(){ if(b.dataset.done)return;
+        Array.prototype.forEach.call(box.children,function(x){x.dataset.done='1';});
+        if(o===correct){ b.className='opt correct'; exScore++; }
+        else { b.className='opt wrong'; Array.prototype.forEach.call(box.children,function(x){ if(x.textContent===correct) x.className='opt correct'; }); }
+        setTimeout(function(){ exI++; showQ(); }, 750);
+      }; box.appendChild(b); });
+  }
+  function finishExam(){
+    el('scoreBig').textContent=exScore+' / '+exQ.length;
+    var pct=Math.round(exScore/exQ.length*100);
+    el('scoreSub').textContent = pct>=80?'Excellent! You\'re ready. 🎉':(pct>=50?'Good — keep practicing.':'Keep studying, you\'ll get there.');
+    var best=data.best[curDeck.id]||0; if(exScore>best){ data.best[curDeck.id]=exScore; save(); }
+    show('examDone');
+  }
+  el('eBack').onclick=function(){ show('study'); };
+  el('edBack').onclick=el('examHome').onclick=function(){ renderHome(); show('home'); };
+  el('examAgain').onclick=function(){ startExam(curDeck); };
+
+  // share
+  el('shareBtn').onclick=function(){
+    var total=0; Object.keys(data.known).forEach(function(k){ total+=data.known[k].length; });
+    var txt='I\'ve learned '+total+' flashcards studying for my tests with Flashcards 🎓 ';
+    var url='https://play.google.com/store/apps/details?id=com.refaz.flashcards';
+    if(navigator.share) navigator.share({title:'Flashcards',text:txt,url:url}).catch(function(){});
+    else if(window.Native&&window.Native.share) window.Native.share(txt+url);
+    else toast('Study some cards first!');
+  };
+
+  renderHome();
+})();
+</script>
+  <script src="native-bridge.js"></script>
+</body>
+</html>
