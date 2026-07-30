@@ -1,6 +1,7 @@
 package com.refaz.flashcards
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -94,8 +95,8 @@ class MainActivity : android.app.Activity() {
         }
         @JavascriptInterface fun share(text: String) {
             runOnUiThread {
-                val i = android.content.Intent(android.content.Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(android.content.Intent.EXTRA_TEXT, text) }
-                startActivity(android.content.Intent.createChooser(i, "Share"))
+                val i = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, text) }
+                startActivity(Intent.createChooser(i, "Share"))
             }
         }
     }
