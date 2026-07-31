@@ -15,9 +15,9 @@ android {
         applicationId = "com.refaz.quantumascent"
         minSdk = 24
         targetSdk = 36
-        versionCode = 2
+        versionCode = 3
         versionName = "1.0"
-        manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
+        manifestPlaceholders["admobAppId"] = "ca-app-pub-8054232338509216~7187008801"
     }
     signingConfigs {
         if (keystorePropsFile.exists()) {

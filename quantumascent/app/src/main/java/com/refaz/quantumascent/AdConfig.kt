@@ -14,9 +14,9 @@ object AdConfig {
     private const val TEST_INTERSTITIAL = "ca-app-pub-3940256099942544/1033173712"
     private const val TEST_REWARDED = "ca-app-pub-3940256099942544/5224354917"
 
-    private const val REAL_BANNER = "ca-app-pub-0000000000000000/0000000000"
-    private const val REAL_INTERSTITIAL = "ca-app-pub-0000000000000000/0000000000"
-    private const val REAL_REWARDED = "ca-app-pub-0000000000000000/0000000000"
+    private const val REAL_BANNER = "ca-app-pub-8054232338509216/8903681089"
+    private const val REAL_INTERSTITIAL = "ca-app-pub-8054232338509216/6232305777"
+    private const val REAL_REWARDED = "ca-app-pub-8054232338509216/4380168050"
 
     val bannerId get() = if (USE_TEST_ADS) TEST_BANNER else REAL_BANNER
     val interstitialId get() = if (USE_TEST_ADS) TEST_INTERSTITIAL else REAL_INTERSTITIAL
