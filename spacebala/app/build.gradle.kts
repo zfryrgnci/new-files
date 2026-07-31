@@ -23,11 +23,11 @@ android {
         applicationId = "com.refaz.spacebala"
         minSdk = 24
         targetSdk = 36
-        versionCode = 11
+        versionCode = 12
         versionName = "1.0"
 
         // AdMob App ID (test id by default — replace with your real one for release).
-        manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
+        manifestPlaceholders["admobAppId"] = "ca-app-pub-8054232338509216~9217561765"
     }
 
     signingConfigs {
