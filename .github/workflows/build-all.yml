@@ -67,8 +67,8 @@ jobs:
           ls -R releases || true
       - name: Commit AABs back to repo
         run: |
-          git config user.name "ci"
-          git config user.email "ci@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f releases
           git commit -m "Publish signed game AABs to releases/ [skip ci]" || echo "nothing to commit"
           git push
