@@ -1,7 +1,6 @@
 package com.refaz.flashcards
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Bundle
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -92,12 +91,6 @@ class MainActivity : android.app.Activity() {
         }
         @JavascriptInterface fun purchaseRemoveAds() {
             runOnUiThread { billing.launchPurchase(this@MainActivity) }
-        }
-        @JavascriptInterface fun share(text: String) {
-            runOnUiThread {
-                val i = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, text) }
-                startActivity(Intent.createChooser(i, "Share"))
-            }
         }
     }
 
