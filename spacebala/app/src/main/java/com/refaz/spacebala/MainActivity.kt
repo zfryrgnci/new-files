@@ -65,16 +65,17 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun showCrashScreen(text: String) {
-        val tv = android.widget.TextView(this).apply {
-            text = "SPACE BALA — CRASH REPORT\nScreenshot this whole screen and send it.\n\n$text"
-            setTextColor(0xFFFF6666.toInt())
-            setBackgroundColor(0xFF000000.toInt())
-            textSize = 11f
-            setPadding(28, 60, 28, 28)
-            setTextIsSelectable(true)
-        }
-        setContentView(android.widget.ScrollView(this).apply { addView(tv) })
+    private fun showCrashScreen(report: String) {
+        val tv = android.widget.TextView(this)
+        tv.setText("SPACE BALA — CRASH REPORT\nScreenshot this whole screen and send it.\n\n" + report)
+        tv.setTextColor(0xFFFF6666.toInt())
+        tv.setBackgroundColor(0xFF000000.toInt())
+        tv.setTextSize(11f)
+        tv.setPadding(28, 60, 28, 28)
+        tv.setTextIsSelectable(true)
+        val scroll = android.widget.ScrollView(this)
+        scroll.addView(tv)
+        setContentView(scroll)
     }
 
     private fun startApp() {
