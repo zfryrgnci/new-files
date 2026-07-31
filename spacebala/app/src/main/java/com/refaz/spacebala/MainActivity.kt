@@ -32,6 +32,52 @@ class MainActivity : Activity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // --- DIAGNOSTIC CRASH-CATCHER (temporary) ---------------------------
+        // Persist any uncaught crash so its exact reason can be shown on the
+        // next launch instead of the app just "keeps stopping".
+        val prevHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { t, e ->
+            try {
+                val sw = java.io.StringWriter()
+                e.printStackTrace(java.io.PrintWriter(sw))
+                openFileOutput("last_crash.txt", MODE_PRIVATE).use {
+                    it.write(sw.toString().toByteArray())
+                }
+            } catch (_: Throwable) { }
+            prevHandler?.uncaughtException(t, e)
+        }
+        // If we crashed last time, show the reason instead of relaunching.
+        val crashFile = getFileStreamPath("last_crash.txt")
+        if (crashFile != null && crashFile.exists()) {
+            val txt = try { crashFile.readText() } catch (e: Throwable) { e.toString() }
+            crashFile.delete()
+            showCrashScreen(txt)
+            return
+        }
+        // Any synchronous launch crash is caught and shown immediately.
+        try {
+            startApp()
+        } catch (t: Throwable) {
+            val sw = java.io.StringWriter()
+            t.printStackTrace(java.io.PrintWriter(sw))
+            showCrashScreen(sw.toString())
+        }
+    }
+
+    private fun showCrashScreen(text: String) {
+        val tv = android.widget.TextView(this).apply {
+            text = "SPACE BALA — CRASH REPORT\nScreenshot this whole screen and send it.\n\n$text"
+            setTextColor(0xFFFF6666.toInt())
+            setBackgroundColor(0xFF000000.toInt())
+            textSize = 11f
+            setPadding(28, 60, 28, 28)
+            setTextIsSelectable(true)
+        }
+        setContentView(android.widget.ScrollView(this).apply { addView(tv) })
+    }
+
+    private fun startApp() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         hideSystemBars()
