@@ -23,7 +23,7 @@ android {
         applicationId = "com.refaz.spacebala"
         minSdk = 24
         targetSdk = 36
-        versionCode = 3
+        versionCode = 10
         versionName = "1.0"
 
         // AdMob App ID (test id by default — replace with your real one for release).
