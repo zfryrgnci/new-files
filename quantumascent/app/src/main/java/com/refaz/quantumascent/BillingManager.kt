@@ -31,7 +31,8 @@ class BillingManager(private val context: Context, private val onEntitlementChan
                 .setProductId(AdConfig.REMOVE_ADS_SKU)
                 .setProductType(BillingClient.ProductType.INAPP).build()
         )).build()
-        billingClient.queryProductDetailsAsync(params) { result, list ->
+        billingClient.queryProductDetailsAsync(params) { result, queryResult ->
+            val list = queryResult.productDetailsList
             if (result.responseCode == BillingClient.BillingResponseCode.OK && list.isNotEmpty()) productDetails = list[0]
         }
     }

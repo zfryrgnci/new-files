@@ -59,7 +59,8 @@ class BillingManager(
                     .build()
             )
         ).build()
-        billingClient.queryProductDetailsAsync(params) { result, list ->
+        billingClient.queryProductDetailsAsync(params) { result, queryResult ->
+            val list = queryResult.productDetailsList
             if (result.responseCode == BillingClient.BillingResponseCode.OK && list.isNotEmpty()) {
                 productDetails = list[0]
             }
